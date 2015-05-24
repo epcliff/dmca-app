@@ -22,14 +22,15 @@ class NoticesController extends Controller {
 	}
 
 	/**
-	 * Show all notices.
+	 * Show all notices create by the user.
 	 *
 	 * @return string
 	 */
 	public function index()
 	{
 //	    return Notice::all();
-		return $this->user->notices;
+		$notices = $this->user->notices;
+		return view('notices.index', compact('notices'));
 	}
 
 	/**

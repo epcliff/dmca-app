@@ -9,6 +9,7 @@ use App\Provider;
 use Illuminate\Auth\Guard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class NoticesController extends Controller {
 
@@ -67,7 +68,14 @@ class NoticesController extends Controller {
 	 */
 	public function store(Request $request)
 	{
-		$this->createNotice($request);
+		$notice = $this->createNotice($request);
+
+		// And then fire off the email
+		Mail::queue('emails.dmca', compact('notice'), function($message) use ($notice) {
+			$message->from($notice->getOwnerEmail())
+					->to($notice->getRecipientEmail())
+					->subject('DMCA Notice');
+		});
 
 		return redirect('notices');
 //		return Notice::first();
@@ -97,18 +105,22 @@ class NoticesController extends Controller {
 	private function createNotice(Request $request)
 	{
 // Form data is flashed. Get with session()->get('dmca')
-		$data = session()->get('dmca');
+//		$data = session()->get('dmca');
 		// Template is in request. Request::input('template')
 		// So build up a Notice object (create table too)
 		// Persist it with this data.
-		// And then fire off the email
+
 //		Notice::open($data)
 //			->useTemplate($request->input('template'))
 //			->save();
 
-		$notice = Notice::open($data)->useTemplate($request->input('template'));
+//		$notice = Notice::open($data)->useTemplate($request->input('template'));
 
-		Auth::user()->notices()->save($notice);
+		$notice = session()->get('dmca') + ['template' => $request->input('template')];
+
+		$notice = Auth::user()->notices()->create($notice);
+
+		return $notice;
 	}
 
 

@@ -43,4 +43,44 @@ class Notice extends Model {
 		return $this; // to make it chainable
 	}
 
+	/**
+	 * A notice belongs to a recipient/provider.
+	 *
+	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 */
+	public function recipient()
+	{
+	    return $this->belongsTo('App\Provider', 'provider_id');
+	}
+
+	/**
+	 * A notice is create by a user.
+	 *
+	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 */
+	public function user()
+	{
+	    return $this->belongsTo('App\User');
+	}
+
+	/**
+	 * Get the email address for the recipient of the DMCA notice
+	 *
+	 * @return string
+	 */
+	public function getRecipientEmail()
+	{
+		return $this->recipient->copyright_email;
+	}
+
+	/**
+	 * Get the email address of the notice.
+	 *
+	 * @return string
+	 */
+	public function getOwnerEmail()
+	{
+		return $this->user->email;
+	}
+
 }

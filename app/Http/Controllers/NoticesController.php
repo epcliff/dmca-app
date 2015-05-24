@@ -6,9 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PrepareNoticeRequest;
 use App\Notice;
 use App\Provider;
-use Illuminate\Auth\Guard;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
 class NoticesController extends Controller {
@@ -19,6 +17,8 @@ class NoticesController extends Controller {
 	public function __construct()
 	{
 	    $this->middleware('auth');
+
+		parent::__construct();
 	}
 
 	/**
@@ -29,7 +29,7 @@ class NoticesController extends Controller {
 	public function index()
 	{
 //	    return Notice::all();
-		return Auth::user()->notices;
+		return $this->user->notices;
 	}
 
 	/**
@@ -49,12 +49,11 @@ class NoticesController extends Controller {
 	 * Ask the user to confirm the DMCA that will be delivered.
 	 *
 	 * @param PrepareNoticeRequest $request
-	 * @param Guard $auth
 	 * @return \Response
 	 */
-	public function confirm(PrepareNoticeRequest $request, Guard $auth)
+	public function confirm(PrepareNoticeRequest $request)
 	{
-		$template =  $this->compileDmcaTemplate($data = $request->all(), $auth);
+		$template =  $this->compileDmcaTemplate($data = $request->all());
 		// We use flash because we need it for exactly one page request
 		// if more than one, use put
 		session()->flash('dmca', $data);
@@ -85,14 +84,13 @@ class NoticesController extends Controller {
 	 * Compile the DMCA template the form data.
 	 *
 	 * @param $data
-	 * @param Guard $auth
 	 * @return mixed
 	 */
-	private function compileDmcaTemplate($data, Guard $auth)
+	private function compileDmcaTemplate($data)
 	{
 		$data = $data + [
-			'name' => $auth->user()->name,
-			'email' => $auth->user()->email,
+			'name' => $this->user->name,
+			'email' => $this->user->email,
 		];
 
 		return view()->file(app_path('Http/Templates/dmca.blade.php'), $data);
@@ -118,7 +116,7 @@ class NoticesController extends Controller {
 
 		$notice = session()->get('dmca') + ['template' => $request->input('template')];
 
-		$notice = Auth::user()->notices()->create($notice);
+		$notice = $this->user->notices()->create($notice);
 
 		return $notice;
 	}
